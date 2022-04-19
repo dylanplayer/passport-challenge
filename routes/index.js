@@ -1,40 +1,119 @@
-const express = require('express');
-const router = express.Router();
-const connectEnsureLogin = require('connect-ensure-login');
-const passport = require('passport');
+var express = require('express');
+var db = require('../db');
 
-
-
-
-// Define routes.
-
-// home route
-router.get('/',
-    (req, res) => {
-        res.render('home', { user: req.user });
+function fetchTodos(req, res, next) {
+  db.all('SELECT rowid AS id, * FROM todos WHERE owner_id = ?', [
+    req.user.id
+  ], function(err, rows) {
+    if (err) { return next(err); }
+    
+    var todos = rows.map(function(row) {
+      return {
+        id: row.id,
+        title: row.title,
+        completed: row.completed == 1 ? true : false,
+        url: '/' + row.id
+      }
     });
+    res.locals.todos = todos;
+    res.locals.activeCount = todos.filter(function(todo) { return !todo.completed; }).length;
+    res.locals.completedCount = todos.length - res.locals.activeCount;
+    next();
+  });
+}
 
-// route to display login form
-router.get('/login',
-    (req, res) => {
-        res.render('login');
-    });
-// Route to submit login form. It uses passport.authenticate
-router.post('/login',
-    passport.authenticate('local', { failureRedirect: '/login' }),
-    (req, res) => {
-        res.redirect('/');
-    });
+var router = express.Router();
 
-// TODO: Complete route to logout of passport session    
-router.get('/logout', /*implement the logout route with req.logout()*/);
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  if (!req.user) { return res.render('home'); }
+  next();
+}, fetchTodos, function(req, res, next) {
+  res.locals.filter = null;
+  res.render('index', { user: req.user });
+});
 
+router.get('/active', fetchTodos, function(req, res, next) {
+  res.locals.todos = res.locals.todos.filter(function(todo) { return !todo.completed; });
+  res.locals.filter = 'active';
+  res.render('index', { user: req.user });
+});
 
-// connectEnsureLogin acting as route guard to make sure the routes can't be accessed if not logged in
-router.get('/profile',
-    connectEnsureLogin.ensureLoggedIn(),
-    (req, res) => {
-        res.render('profile', { user: req.user });
-    });
+router.get('/completed', fetchTodos, function(req, res, next) {
+  res.locals.todos = res.locals.todos.filter(function(todo) { return todo.completed; });
+  res.locals.filter = 'completed';
+  res.render('index', { user: req.user });
+});
+
+router.post('/', function(req, res, next) {
+  req.body.title = req.body.title.trim();
+  next();
+}, function(req, res, next) {
+  if (req.body.title !== '') { return next(); }
+  return res.redirect('/' + (req.body.filter || ''));
+}, function(req, res, next) {
+  db.run('INSERT INTO todos (owner_id, title, completed) VALUES (?, ?, ?)', [
+    req.user.id,
+    req.body.title,
+    req.body.completed == true ? 1 : null
+  ], function(err) {
+    if (err) { return next(err); }
+    return res.redirect('/' + (req.body.filter || ''));
+  });
+});
+
+router.post('/:id(\\d+)', function(req, res, next) {
+  req.body.title = req.body.title.trim();
+  next();
+}, function(req, res, next) {
+  if (req.body.title !== '') { return next(); }
+  db.run('DELETE FROM todos WHERE rowid = ? AND owner_id = ?', [
+    req.params.id,
+    req.user.id
+  ], function(err) {
+    if (err) { return next(err); }
+    return res.redirect('/' + (req.body.filter || ''));
+  });
+}, function(req, res, next) {
+  db.run('UPDATE todos SET title = ?, completed = ? WHERE rowid = ? AND owner_id = ?', [
+    req.body.title,
+    req.body.completed !== undefined ? 1 : null,
+    req.params.id,
+    req.user.id
+  ], function(err) {
+    if (err) { return next(err); }
+    return res.redirect('/' + (req.body.filter || ''));
+  });
+});
+
+router.post('/:id(\\d+)/delete', function(req, res, next) {
+  db.run('DELETE FROM todos WHERE rowid = ? AND owner_id = ?', [
+    req.params.id,
+    req.user.id
+  ], function(err) {
+    if (err) { return next(err); }
+    return res.redirect('/' + (req.body.filter || ''));
+  });
+});
+
+router.post('/toggle-all', function(req, res, next) {
+  db.run('UPDATE todos SET completed = ? WHERE owner_id = ?', [
+    req.body.completed !== undefined ? 1 : null,
+    req.user.id
+  ], function(err) {
+    if (err) { return next(err); }
+    return res.redirect('/' + (req.body.filter || ''));
+  });
+});
+
+router.post('/clear-completed', function(req, res, next) {
+  db.run('DELETE FROM todos WHERE owner_id = ? AND completed = ?', [
+    req.user.id,
+    1
+  ], function(err) {
+    if (err) { return next(err); }
+    return res.redirect('/' + (req.body.filter || ''));
+  });
+});
 
 module.exports = router;

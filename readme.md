@@ -1,61 +1,45 @@
-# Instructions
+# todos-express-starter
 
----
+This is a starter kit for building a todo app with sign in functionality using
+[Express](https://expressjs.com/), [Passport](https://www.passportjs.org/) and
+[SQLite](https://www.sqlite.org/).
 
-**At the end of this activity you should have successfully implemented Authentication with passport Local Strategy** (_username and password_) **by completing the TODOs in `server.js` and `routes/index.js`**.
+The following is a list of complete, working apps that have been built using
+this kit as a starting point.
 
-To install this starter code on your computer, clone the repository and install dependencies with
+* [todos-express-password](https://github.com/passport/todos-express-password)
 
-```shell
-npm install
-```
+  Illustrates how to sign in with a username and password.
 
-1. Create a **`.env`** file and include the values for port and private key. Check the **`.env-sample`** file for refrence\.
+* [todos-express-password-flash](https://github.com/passport/todos-express-password-flash)
 
-2. In `server.js` on **line 15** inside the the `passport.use()` method, configure passport local strategy\.
+  Illustrates how to sign in with a username and password and use the flash for
+  informative messages.
 
-    - instiante the LocalStrategy object - `new LocalStrategy()`.
-    - pass an anonymous function as its only argument - `new LocalStrategy(()=>{})`
-    - pass username, password and cb(callback function) as the arguments in the anonymous function - `new LocalStrategy((username, password, cb) =>{})`
-    - put the database query method implementation (`db.findByUsername()`) in the block of the localstrategy object. 
-    - Your code should end up looking like this:
+* [todos-express-google](https://github.com/passport/todos-express-google)
 
-    ```javascript
-    passport.use(new LocalStrategy((username, password, cb) => {
-    db.findByUsername(username, (err, user) => {
-        //code to verify user with password here
-        // return callback function invoked with a user object - cb(null, user)
-    }));
-    ```
+  Illustrates how to sign in with Google via OpenID Connect.
 
-3. In `server.js`, with `passport.serializeUser()` function and using the `user.id` object, configure passport to serilaize users\.
+* [todos-express-google-oauth2](https://github.com/passport/todos-express-google-oauth2)
 
-4. In `server.js` on **line 46**, with `passport.serializeUser()` function and using the `user.id` object, configure passport to serilaize users\.
+  Illustrates how to sign in with Google via OAuth 2.0.
 
-5. In `server.js` **line 82**, initialize passport with the `passport.initialize()` function\.
+* [todos-express-email](https://github.com/passport/todos-express-email)
 
-6. In `server.js` **line 83**, include the `passport.session()` function to restore authentication state from the session\.
+  Illustrates how to sign in with email via magic link.
 
-7. Complete the logout route in `routes/index.js`. Use the `req.lgout()` method passport provides. See refrence [here](http://www.passportjs.org/docs/logout/)\.
+* [todos-express-auth0](https://github.com/passport/todos-express-auth0)
 
-8. Start the server. Make sure you are in the project's directory in our terminal:
+  Illustrates how to implement sign in by integrating with Auth0 via OpenID Connect.
 
-``` shell
-npm start
-```
+* [todos-express-openidconnect](https://github.com/passport/todos-express-openidconnect)
 
-Open a web browser and navigate to <http://localhost:3000/> to see the code in action.
+  Illustrates how to implement sign in by integrating with an identity provider (IdP) via OpenID Connect.
 
-**Log in with either of these details:**
+## License
 
->username: **amy**,
->password: **strings**
+[The Unlicense](https://opensource.org/licenses/unlicense)
 
-**OR**
+## Credit
 
->username: **anne**,
->password: **secret**
-
-## Stretch Challenge
-
-- Try out using passport-github to do github oauth authentication with passport. See refrence [here](http://mherman.org/blog/2013/11/10/social-authentication-with-passport-dot-js/)
+Created by [Jared Hanson](https://www.jaredhanson.me/)
